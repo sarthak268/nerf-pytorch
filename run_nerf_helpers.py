@@ -113,7 +113,7 @@ class NeRF(nn.Module):
         input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
         h = input_pts
         for i, l in enumerate(self.pts_linears):
-            h = self.pts_linears[i](h)
+            h = self.pts_linears[i](h).float()
             h = F.relu(h)
             if i in self.skips:
                 h = torch.cat([input_pts, h], -1)
