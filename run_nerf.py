@@ -200,19 +200,19 @@ def create_nerf(args):
         embeddirs_fn, input_ch_views = get_embedder(args.multires_views, args.i_embed)
     output_ch = 5 if args.N_importance > 0 else 4
     skips = [4]
-    # model = NeRF(D=args.netdepth, W=args.netwidth,
-    #              input_ch=input_ch, output_ch=output_ch, skips=skips,
-    #              input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
-    model = tcnn.NetworkWithInputEncoding(n_input_dims=2, n_output_dims=n_channels, encoding_config=config["encoding"], network_config=config["network"])
+    model = NeRF(D=args.netdepth, W=args.netwidth,
+                 input_ch=input_ch, output_ch=output_ch, skips=skips,
+                 input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
+    #model = tcnn.NetworkWithInputEncoding(n_input_dims=2, n_output_dims=n_channels, encoding_config=config["encoding"], network_config=config["network"])
 
     grad_vars = list(model.parameters())
 
     model_fine = None
     if args.N_importance > 0:
-        # model_fine = NeRF(D=args.netdepth_fine, W=args.netwidth_fine,
-        #                   input_ch=input_ch, output_ch=output_ch, skips=skips,
-        #                   input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
-        model_fine = tcnn.NetworkWithInputEncoding(n_input_dims=2, n_output_dims=n_channels, encoding_config=config["encoding"], network_config=config["network"])
+        model_fine = NeRF(D=args.netdepth_fine, W=args.netwidth_fine,
+                          input_ch=input_ch, output_ch=output_ch, skips=skips,
+                          input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
+        #model_fine = tcnn.NetworkWithInputEncoding(n_input_dims=2, n_output_dims=n_channels, encoding_config=config["encoding"], network_config=config["network"])
 
         grad_vars += list(model_fine.parameters())
 
@@ -222,8 +222,8 @@ def create_nerf(args):
                                                                 netchunk=args.netchunk)
 
     # Create optimizer
-    #optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
+    #optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     start = 0
     basedir = args.basedir
@@ -776,6 +776,7 @@ def train():
                 target_s = target[select_coords[:, 0], select_coords[:, 1]]  # (N_rand, 3)
 
         #####  Core optimization loop  #####
+        print ('---------------------------', render_kwargs_train)
         rgb, disp, acc, extras = render(H, W, K, chunk=args.chunk, rays=batch_rays,
                                                 verbose=i < 10, retraw=True,
                                                 **render_kwargs_train)
