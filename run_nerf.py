@@ -18,11 +18,25 @@ from load_deepvoxels import load_dv_data
 from load_blender import load_blender_data
 from load_LINEMOD import load_LINEMOD_data
 
+try:
+	import tinycudann as tcnn
+except ImportError:
+	print("This sample requires the tiny-cuda-nn extension for PyTorch.")
+	print("You can install it by running:")
+	print("============================================================")
+	print("tiny-cuda-nn$ cd bindings/torch")
+	print("tiny-cuda-nn/bindings/torch$ python setup.py install")
+	print("============================================================")
+	sys.exit()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 np.random.seed(0)
 DEBUG = False
 
+with open('tcnn_config.json') as config_file:
+	config = json.load(config_file)
+
+n_channels = 3
 
 def batchify(fn, chunk):
     """Constructs a version of 'fn' that applies to smaller batches.
@@ -186,9 +200,11 @@ def create_nerf(args):
         embeddirs_fn, input_ch_views = get_embedder(args.multires_views, args.i_embed)
     output_ch = 5 if args.N_importance > 0 else 4
     skips = [4]
-    model = NeRF(D=args.netdepth, W=args.netwidth,
-                 input_ch=input_ch, output_ch=output_ch, skips=skips,
-                 input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
+    # model = NeRF(D=args.netdepth, W=args.netwidth,
+    #              input_ch=input_ch, output_ch=output_ch, skips=skips,
+    #              input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
+    model = tcnn.NetworkWithInputEncoding(n_input_dims=2, n_output_dims=n_channels, encoding_config=config["encoding"], network_config=config["network"])
+
     grad_vars = list(model.parameters())
 
     model_fine = None
@@ -204,7 +220,8 @@ def create_nerf(args):
                                                                 netchunk=args.netchunk)
 
     # Create optimizer
-    optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
+    #optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     start = 0
     basedir = args.basedir
