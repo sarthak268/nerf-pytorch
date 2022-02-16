@@ -4,6 +4,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+try:
+	import tinycudann as tcnn
+except ImportError:
+	print("This sample requires the tiny-cuda-nn extension for PyTorch.")
+	print("You can install it by running:")
+	print("============================================================")
+	print("tiny-cuda-nn$ cd bindings/torch")
+	print("tiny-cuda-nn/bindings/torch$ python setup.py install")
+	print("============================================================")
+	sys.exit()
 
 # Misc
 img2mse = lambda x, y : torch.mean((x - y) ** 2)
