@@ -76,8 +76,10 @@ class NeRF(nn.Module):
         self.skips = skips
         self.use_viewdirs = use_viewdirs
         
-        self.pts_linears = nn.ModuleList(
-            [nn.Linear(input_ch, W)] + [nn.Linear(W, W) if i not in self.skips else nn.Linear(W + input_ch, W) for i in range(D-1)])
+        # self.pts_linears = nn.ModuleList(
+        #     [nn.Linear(input_ch, W)] + [nn.Linear(W, W) if i not in self.skips else nn.Linear(W + input_ch, W) for i in range(D-1)])
+
+        self.pts_linears = tcnn.Network(n_input_dims=63, n_output_dims=256, network_config=config["network"])
         
         ### Implementation according to the official code release (https://github.com/bmild/nerf/blob/master/run_nerf_helpers.py#L104-L105)
         self.views_linears = nn.ModuleList([nn.Linear(input_ch_views + W, W//2)])
