@@ -113,7 +113,9 @@ class NeRF(nn.Module):
             self.output_linear = nn.Linear(W, output_ch)
 
     def forward(self, x):
+        print ('x = ', x.shape)
         input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
+        print ('input = ', input_pts.shape, input_views.shape)
         h = input_pts
         # for i, l in enumerate(self.pts_linears):
         #     h = self.pts_linears[i](h).float()
