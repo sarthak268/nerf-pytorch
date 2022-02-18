@@ -93,9 +93,10 @@ class NeRF(nn.Module):
         # self.pts_linears = nn.ModuleList(
         #     [nn.Linear(input_ch, W)] + [nn.Linear(W, W) if i not in self.skips else nn.Linear(W + input_ch, W) for i in range(D-1)])
 
-        self.pts_linears = [tcnn.Network(n_input_dims=63, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"])]
+        #self.pts_linears = [tcnn.Network(n_input_dims=63, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"]), tcnn.Network(n_input_dims=256, n_output_dims=256, network_config=config["network"])]
         #self.pts_linears = [tcnn.NetworkWithInputEncoding(n_input_dims=63, n_output_dims=256, encoding_config=config["encoding"], network_config=config["network"])]
         #print ('===================',self.pts_linears)
+        self.pts_linears = tcnn.Network(n_input_dims=63, n_output_dims=256, network_config=config["network"])
         
         ### Implementation according to the official code release (https://github.com/bmild/nerf/blob/master/run_nerf_helpers.py#L104-L105)
         self.views_linears = nn.ModuleList([nn.Linear(input_ch_views + W, W//2)])
@@ -114,12 +115,12 @@ class NeRF(nn.Module):
     def forward(self, x):
         input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
         h = input_pts
-        for i, l in enumerate(self.pts_linears):
-            h = self.pts_linears[i](h).float()
-            h = F.relu(h)
-            if i in self.skips:
-                h = torch.cat([input_pts, h], -1)
-        #h = self.pts_linears(h).float()
+        # for i, l in enumerate(self.pts_linears):
+        #     h = self.pts_linears[i](h).float()
+        #     h = F.relu(h)
+        #     if i in self.skips:
+        #         h = torch.cat([input_pts, h], -1)
+        h = self.pts_linears(h).float()
 
         if self.use_viewdirs:
             alpha = self.alpha_linear(h)
